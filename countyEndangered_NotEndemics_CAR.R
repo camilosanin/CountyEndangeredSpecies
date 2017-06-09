@@ -275,7 +275,7 @@ summary(FitModel, pars = c("a",paste("b[",1:dim(X)[2],"]", sep="")))$summary #[,
 #Calls coeff for states effects in matrix X
 summary(FitModel, pars = paste("a_cat[",1:nHyperP,"]", sep=""))$summary[,"50%"]
 
-resultsShape@data[AllIncludedFeatures$featureShape,"state_coeff"] = summary(FitModel, pars =paste("a_cat[",1:nHyperP,"]", sep=""))$summary[paste("a_cat[",HyperPAssign,"]", sep=""),"50%"]
+resultsShape@data[AllIncludedFeatures$featureShape,"state_coeff"] = summary(FitModel, pars =paste("a_cat[",1:nHyperP,"]", sep=""))$c_summary[,,2][paste("a_cat[",HyperPAssign,"]", sep=""),"50%"]
 
 plot(resultsShape@data[,c("P_State","state_coeff")])
 abline(h=0,lty="dashed", lwd= 2, col="darkred")
@@ -286,41 +286,44 @@ abline(h=0,lty="dashed", lwd= 2, col="darkred")
 
 
 #Calls r squareds 
-summary(FitModel, pars = c("r_sq","r_sq_justX","r_sq_notGeo" ))$summary #[,"50%"]
+summary(FitModel, pars = c("r_sq","r_sq_justX","r_sq_notGeo" ))$c_summary[,,2] #[,"50%"]
 
 
 #Calls p per county 
 
-resultsShape@data[AdMatrixData$geoInfo$sampledId$featureShape,"p_est"] = summary(FitModel, pars = paste("p[",1:length(AdMatrixData$geoInfo$sampledId$featureShape),"]", sep=""))$summary[,"50%"]
+resultsShape@data[AdMatrixData$geoInfo$sampledId$featureShape,"p_est"] = summary(FitModel, pars = paste("p[",1:length(AdMatrixData$geoInfo$sampledId$featureShape),"]", sep=""))$c_summary[,,2][,"50%"]
 plot(resultsShape@data[AdMatrixData$geoInfo$sampledId$featureShape,c("P","p_est")])
 abline(a = 0,b = 1,lty="dashed", lwd= 2, col="darkred")
 
 
 #Calls p_calc per county (p calculated from X, a and state)
-resultsShape@data[AllIncludedFeatures$featureShape,"p_calc"] = summary(FitModel, pars = paste("calc_p[",1:length(AllIncludedFeatures$featureShape),"]", sep=""))$summary[,"50%"]
+resultsShape@data[AllIncludedFeatures$featureShape,"p_calc"] = summary(FitModel, pars = paste("calc_p[",1:length(AllIncludedFeatures$featureShape),"]", sep=""))$c_summary[,,2][,"50%"]
 plot(resultsShape@data[AllIncludedFeatures$featureShape,c("P","p_calc")])
 abline(a = 0,b = 1,lty="dashed", lwd= 2, col="darkred")
 
 
 #Calls p_calc per county (p calculated from X, a NOT state)
-resultsShape@data[AllIncludedFeatures$featureShape,"p_calc_justX"] = summary(FitModel, pars = paste("calc_p_justX[",1:length(AllIncludedFeatures$featureShape),"]", sep=""))$summary[,"50%"]
+resultsShape@data[AllIncludedFeatures$featureShape,"p_calc_justX"] = summary(FitModel, pars = paste("calc_p_justX[",1:length(AllIncludedFeatures$featureShape),"]", sep=""))$c_summary[,,2][,"50%"]
 plot(resultsShape@data[AllIncludedFeatures$featureShape,c("P","p_calc_justX")])
 abline(a = 0,b = 1,lty="dashed", lwd= 2, col="darkred")
 
 #Calls p_calc per county (p calculated from X, a and state NOT Geo)
-resultsShape@data[AllIncludedFeatures$featureShape,"p_calc_notGeo"] = summary(FitModel, pars = paste("calc_p_notGeo[",1:length(AllIncludedFeatures$featureShape),"]", sep=""))$summary[,"50%"]
+resultsShape@data[AllIncludedFeatures$featureShape,"p_calc_notGeo"] = summary(FitModel, pars = paste("calc_p_notGeo[",1:length(AllIncludedFeatures$featureShape),"]", sep=""))$c_summary[,,2][,"50%"]
 plot(resultsShape@data[AllIncludedFeatures$featureShape,c("P","p_calc_notGeo")])
 abline(a = 0,b = 1,lty="dashed", lwd= 2, col="darkred")
 
 #Calls geo effect
-resultsShape@data[AllIncludedFeatures$featureShape,"geo_effect"] = summary(FitModel, pars = paste("geo_effect[",1:length(AllIncludedFeatures$featureShape),"]", sep=""))$summary[,"50%"]
+resultsShape@data[AllIncludedFeatures$featureShape,"geo_effect"] = summary(FitModel, pars = paste("geo_effect[",1:length(AllIncludedFeatures$featureShape),"]", sep=""))$c_summary[,,2][,"50%"]
 plot(resultsShape@data[AllIncludedFeatures$featureShape,c("P_Geo","geo_effect")])
 abline(h=0,lty="dashed", lwd= 2, col="darkred")
 
-
+spplot(resultsShape, col="transparent", zcol="geo_effect")
 #The residuals can be calculated by p - calc_p
 
-stan_dens(FitModel,pars = c("r_sq","r_sq_justX"),separate_chains = T )
+stan_dens(FitModel,pars = c("r_sq","r_sq_justX", "r_sq_notGeo"),separate_chains = T )
+
+stan_dens(FitModel,pars = c("alpha","tau"),separate_chains = T )
+
 
 stan_dens(FitModel,pars = c("p[1]","p[50]"),separate_chains = T )
 

@@ -6,6 +6,7 @@
 library(rgeos)
 library(raster)
 library(ggplot2)
+library(rgdal)
 
 #Specified seed for replicability
 set.seed(500)
@@ -263,10 +264,11 @@ summary(FitModel, pars = paste("a_cat[",1:nHyperP,"]", sep=""))$summary[,"50%"]
 countyShapeFile@data[whichHaveSpecies,"state_coeff"] = summary(FitModel, pars =paste("a_cat[",1:nHyperP,"]", sep=""))$summary[paste("a_cat[",HyperPAssign,"]", sep=""),"50%"]
 
 plot(countyShapeFile@data[whichHaveSpecies,c("P_State","state_coeff")])
+abline(h=0,lty="dashed", lwd= 2, col="darkred")
+
 spplot(countyShapeFile, col = "transparent", zcol=c("P_State"))
 spplot(countyShapeFile, col = "transparent", zcol=c("state_coeff"))
 
-abline(h=0,lty="dashed", lwd= 2, col="darkred")
 
 plot(countyShapeFile@data[whichHaveSpecies,c("P_Geo","state_coeff")])
 abline(h=0,lty="dashed", lwd= 2, col="darkred")
@@ -301,10 +303,10 @@ abline(a = 0,b = 1,lty="dashed", lwd= 2, col="darkred")
 
 #The residuals can be calculated by p - calc_p
 
-stan_dens(FitModel,pars = c("r_sq","r_sq_justX"),separate_chains = T )
+stan_dens(FitModel,pars = c("r_sq","r_sq_justX"),separate_chains = F )
 
 stan_dens(FitModel,pars = c("p[1]","p[50]"),separate_chains = T )
 
-countyShapeFile = shapefile(countyShapeFile, "./County_Shape/countyOutput_noCAR.shp")
+shapefile(countyShapeFile, "./County_Shape/countyOutput_noCAR.shp", overwrite = T)
 
 
