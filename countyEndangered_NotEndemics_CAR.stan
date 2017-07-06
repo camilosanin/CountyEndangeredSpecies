@@ -104,7 +104,7 @@ transformed parameters {
 
 model
   {
-    target += sparse_car_lpdf(geo_effect | tau, alpha, W_sparse, D_sparse, lambda, n, W_n);
+    #target += sparse_car_lpdf(geo_effect | tau, alpha, W_sparse, D_sparse, lambda, n, W_n);
     target += normal_lpdf(geo_effect | 0, 1);
 
 
