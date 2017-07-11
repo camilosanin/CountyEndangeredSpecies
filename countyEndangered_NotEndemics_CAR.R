@@ -12,6 +12,7 @@ set.seed(500)
 
 countyShapeFile = shapefile("./County_Shape/cb_2016_us_county_20m.shp")
 
+countyShapeFile = countyShapeFile[countyShapeFile@data$STATEFP%in%as.character(c(10:30)),]
 #Create a feature with P which is autocorrelated in two ways: just resuduals and for X
 
 nCounties = dim(countyShapeFile@data)[1]
@@ -91,7 +92,7 @@ countyShapeFile@data[,"P"] = countyShapeFile@data[,"P_X"]*0.55+countyShapeFile@d
 spplot(countyShapeFile,  col = "transparent", zcol = c("P"))
 
 #Number of species to simulate
-nSpecies = 2500
+nSpecies = 1000
 
 
 #Simulates number of counties a species occurs in (inflating small numbers, but omiting 0)
@@ -241,7 +242,8 @@ stanData = list( nCounties = length(AdMatrixData$geoInfo$sampledId$featureShape)
                  nHyperP = nHyperP, #Number of categories (States)
                  HyperPAssign = HyperPAssign, #Vector of length counties assigning it to a state (numeric)
                  K = dim(X)[2],
-                 x_pred = X
+                 x_pred = X,
+                 proportionEndSp = nEnd/(nEnd+nNotEnd)
                  
 )
 
@@ -252,16 +254,18 @@ StanModel = stan_model(file = "countyEndangered_NotEndemics_CAR.stan" )
 #Runs the MCMC model                       
 FitModel = sampling(StanModel,
 data = stanData,              # named list of data
-chains = 2,                   # number of Markov chains
-warmup = 1000,               # number of warmup iterations per chain
-iter = 2000,                 # total number of iterations per chain (includes warm-up)
+chains = 1,                   # number of Markov chains
+warmup = 2000,               # number of warmup iterations per chain
+iter = 3000,                 # total number of iterations per chain (includes warm-up)
 cores = 2,                    # number of cores
-refresh = 10                 # show progress every 'refresh' iterations
+refresh = 50                 # show progress every 'refresh' iterations
 )
 
 #save(FitModel, file= paste("./",format(Sys.time(), "%b%d%Y"),"FitModel_NoEndemics.RData",sep =""))
 
 #Opens model analytics in Shiny
+
+summary(FitModel, pars = c("random_lh", "obs_lh"),  use_cache = F)
 
 resultsShape = AdMatrixData$geoDataObject
   

@@ -58,6 +58,7 @@ data{
   int<lower=1> HyperPAssign[n]; //Assignment of counties to hyperPs
   int<lower=1> K;
   matrix [n,K] x_pred; //Matrix of predictors
+  real <lower=0, upper =1> proportionEndSp;
   
 
   
@@ -96,15 +97,17 @@ transformed parameters {
 
 
 
+
   odds_raw = (x_pred[sampledId,]*b)+error+a+a_cat[HyperPAssign[sampledId]]+geo_effect[sampledId];
   logP =  log_inv_logit(odds_raw);
   log1mP = log1m_exp(logP);
-
+  
+   
 }
 
 model
   {
-    #target += sparse_car_lpdf(geo_effect | tau, alpha, W_sparse, D_sparse, lambda, n, W_n);
+    target += sparse_car_lpdf(geo_effect | tau, alpha, W_sparse, D_sparse, lambda, n, W_n);
     target += normal_lpdf(geo_effect | 0, 1);
 
 
@@ -132,20 +135,71 @@ model
 generated quantities 
   {
   
+
 vector<lower=0, upper=1>[n] sim_p;
 vector<lower=0, upper=1>[n] calc_p;
 vector<lower=0, upper=1>[n] calc_p_notGeo;
 vector<lower=0, upper=1>[n] calc_p_justX;
+real  obs_lh;
+real  random_lh;
 real  r_sq;
 real  r_sq_notGeo;
 real  r_sq_justX;
 vector<lower=0, upper=1>[nCounties] p;
+vector <upper = 0> [nNotEnd]probSpNotEnd;
+vector <upper = 0> [nEnd]probSpEnd;
+vector <upper = 0> [nSpecies]rndProbSpNotEnd;
+vector <upper = 0> [nSpecies]rndProbSpEnd;
+int<lower=1> rndEndSpp[nEnd];   //which species are enangered
+int<lower=1> rndNotEndSpp[nNotEnd];   //which species are NOT enangered
+int<lower=0, upper = nEnd> i_end;
+int<lower=0, upper = nNotEnd> i_notEnd;
 
+
+
+probSpNotEnd = notEndSpOccMat * log1mP;
+probSpEnd = log1m_exp(endSpOccMat * log1mP);
+
+
+i_end = 0;
+i_notEnd = 0;
+
+for (sp in 1:(nSpecies)){
+  if((i_end < nEnd) && bernoulli_rng(proportionEndSp)){
+
+    i_end = i_end+1;
+    rndEndSpp [i_end] = sp;
+
+  }else{
+
+    if(i_notEnd < nNotEnd){
+    i_notEnd = i_notEnd+1;
+    rndNotEndSpp [i_notEnd] = sp;
+
+    }else{
+    i_end = i_end+1;
+    rndEndSpp [i_end] = sp;
+
+    }
+
+  }
+
+  
+}
+
+
+
+
+rndProbSpNotEnd = spOccMat * log1mP;
+rndProbSpEnd = log1m_exp(spOccMat * log1mP);
+
+
+random_lh = sum(rndProbSpNotEnd[rndNotEndSpp])+sum(rndProbSpEnd[rndEndSpp]);
+ 
+obs_lh =  sum(probSpNotEnd)+sum(probSpEnd);
+ 
 
 p = exp(logP);
-
-
-
 
 calc_p = inv_logit((x_pred*b)+a+a_cat[HyperPAssign]+geo_effect);
 calc_p_notGeo = inv_logit((x_pred*b)+a+a_cat[HyperPAssign]);
