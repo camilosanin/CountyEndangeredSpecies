@@ -255,10 +255,10 @@ StanModel = stan_model(file = "countyEndangered_NotEndemics_CAR.stan" )
 FitModel = sampling(StanModel,
 data = stanData,              # named list of data
 chains = 1,                   # number of Markov chains
-warmup = 2000,               # number of warmup iterations per chain
-iter = 3000,                 # total number of iterations per chain (includes warm-up)
+warmup = 300,               # number of warmup iterations per chain
+iter = 500,                 # total number of iterations per chain (includes warm-up)
 cores = 2,                    # number of cores
-refresh = 50                 # show progress every 'refresh' iterations
+refresh = 1                 # show progress every 'refresh' iterations
 )
 
 #save(FitModel, file= paste("./",format(Sys.time(), "%b%d%Y"),"FitModel_NoEndemics.RData",sep =""))
@@ -273,12 +273,15 @@ library(shinystan)
 
 #Does the model-estimated Ps perform better than random?
 summary(FitModel, pars = c("random_lh", "obs_lh"),  use_cache = F)
+stan_plot(FitModel, pars = c("random_lh", "obs_lh"), show_density=T, ci_level=0.95, outer_level=1)
 
-stan_plot(FitModel, pars = c("random_lh", "obs_lh"))
+#Does the model-estimated Ps perform better than random?
+summary(FitModel, pars = c("random_logloss", "obs_logloss"),  use_cache = F)
+stan_plot(FitModel, pars = c("random_logloss", "obs_logloss"), show_density=T, ci_level=0.95, outer_level=1)
+
 
 #Calls coeff for predictors in matrix X and intersect
 summary(FitModel, pars = c("a",paste("b[",1:dim(X)[2],"]", sep="")))$summary #[,"50%"]
-stan_plot(FitModel, pars = c("random_lh", "obs_lh"), show_density=T, ci_level=0.95, outer_level=1)
 
 #Calls coeff for states effects in matrix X
 summary(FitModel, pars = paste("a_cat[",1:nHyperP,"]", sep=""))$summary[,"50%"]

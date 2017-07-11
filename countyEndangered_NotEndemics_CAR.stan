@@ -67,7 +67,10 @@ data{
 transformed data{
   matrix [nEnd,nCounties] endSpOccMat; //Matrix of species occurence
   matrix [nNotEnd,nCounties] notEndSpOccMat; //Matrix of species occurence
+  int <lower = 0, upper =1> boolEndangered[nSpecies];
   
+  boolEndangered[notEndSpp] = rep_array(0, nNotEnd);
+  boolEndangered[endSpp] = rep_array(1, nEnd);
   endSpOccMat = spOccMat[endSpp,] ; 
   notEndSpOccMat = spOccMat[notEndSpp,] ;
 
@@ -142,14 +145,18 @@ vector<lower=0, upper=1>[n] calc_p_notGeo;
 vector<lower=0, upper=1>[n] calc_p_justX;
 real  obs_lh;
 real  random_lh;
+real  obs_logloss;
+real  random_logloss;
 real  r_sq;
 real  r_sq_notGeo;
 real  r_sq_justX;
 vector<lower=0, upper=1>[nCounties] p;
 vector <upper = 0> [nNotEnd]probSpNotEnd;
 vector <upper = 0> [nEnd]probSpEnd;
-vector <upper = 0> [nSpecies]rndProbSpNotEnd;
-vector <upper = 0> [nSpecies]rndProbSpEnd;
+vector <upper = 0> [nSpecies]allProbSpNotEnd;
+vector <upper = 0> [nSpecies]allProbSpEnd;
+vector <upper = 0> [nSpecies]obs_logloss_sp;
+vector <upper = 0> [nSpecies]random_logloss_sp;
 int<lower=1> rndEndSpp[nEnd];   //which species are enangered
 int<lower=1> rndNotEndSpp[nNotEnd];   //which species are NOT enangered
 int<lower=0, upper = nEnd> i_end;
@@ -163,6 +170,10 @@ probSpEnd = log1m_exp(endSpOccMat * log1mP);
 
 i_end = 0;
 i_notEnd = 0;
+
+allProbSpNotEnd = spOccMat * log1mP;
+allProbSpEnd = log1m_exp(spOccMat * log1mP);
+
 
 for (sp in 1:(nSpecies)){
   if((i_end < nEnd) && bernoulli_rng(proportionEndSp)){
@@ -184,20 +195,22 @@ for (sp in 1:(nSpecies)){
 
   }
 
-  
+
 }
 
+obs_logloss_sp[endSpp] = allProbSpEnd[endSpp];
+random_logloss_sp[rndEndSpp]= allProbSpEnd[rndEndSpp];
+
+obs_logloss_sp[notEndSpp] = allProbSpNotEnd[notEndSpp];
+random_logloss_sp[rndNotEndSpp]= allProbSpNotEnd[rndNotEndSpp];
 
 
+obs_logloss = (sum(obs_logloss_sp)/nSpecies)*-1;
+random_logloss = (sum(random_logloss_sp)/nSpecies)*-1;
 
-rndProbSpNotEnd = spOccMat * log1mP;
-rndProbSpEnd = log1m_exp(spOccMat * log1mP);
-
-
-random_lh = sum(rndProbSpNotEnd[rndNotEndSpp])+sum(rndProbSpEnd[rndEndSpp]);
- 
+random_lh = sum(allProbSpNotEnd[rndNotEndSpp])+sum(allProbSpEnd[rndEndSpp]);
 obs_lh =  sum(probSpNotEnd)+sum(probSpEnd);
- 
+
 
 p = exp(logP);
 
