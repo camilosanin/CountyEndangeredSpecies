@@ -223,6 +223,9 @@ HyperPAssign = as.numeric(factor(as.character(AdMatrixData$geoDataObject@data$ST
 
 spOccMat = t(AdMatrixData$geoDataObject@data[AdMatrixData$geoInfo$sampledId$featureShape,SppCols])
 
+proportionEndSp = nEnd/(nEnd+nNotEnd)
+expectedRandomLogLoss = (proportionEndSp*log(proportionEndSp)+(1-proportionEndSp)*log(1-proportionEndSp))*-1
+
 #Names of the list elements should be the same (left side of the =)
 stanData = list( nCounties = length(AdMatrixData$geoInfo$sampledId$featureShape),
                  sampledId = AdMatrixData$geoInfo$sampledId$cellStan,
@@ -243,7 +246,7 @@ stanData = list( nCounties = length(AdMatrixData$geoInfo$sampledId$featureShape)
                  HyperPAssign = HyperPAssign, #Vector of length counties assigning it to a state (numeric)
                  K = dim(X)[2],
                  x_pred = X,
-                 proportionEndSp = nEnd/(nEnd+nNotEnd)
+                 proportionEndSp = proportionEndSp
                  
 )
 
@@ -276,9 +279,8 @@ summary(FitModel, pars = c("random_lh", "obs_lh"),  use_cache = F)
 stan_plot(FitModel, pars = c("random_lh", "obs_lh"), show_density=T, ci_level=0.95, outer_level=1)
 
 #Does the model-estimated Ps perform better than random?
-summary(FitModel, pars = c("random_logloss", "obs_logloss"),  use_cache = F)
-stan_plot(FitModel, pars = c("random_logloss", "obs_logloss"), show_density=T, ci_level=0.95, outer_level=1)
-
+summary(FitModel, pars = c("logloss_random", "logloss_obs", "logloss_calc_p", "logloss_notGeo", "logloss_justX" ),  use_cache = F)
+stan_plot(FitModel, pars = c("logloss_random", "logloss_obs", "logloss_calc_p", "logloss_notGeo", "logloss_justX" ), show_density=T, ci_level=0.95, outer_level=1)+ geom_vline(xintercept=expectedRandomLogLoss, linetype="dashed", color = "red")
 
 #Calls coeff for predictors in matrix X and intersect
 summary(FitModel, pars = c("a",paste("b[",1:dim(X)[2],"]", sep="")))$summary #[,"50%"]
@@ -297,7 +299,8 @@ abline(h=0,lty="dashed", lwd= 2, col="darkred")
 
 
 #Calls r squareds 
-summary(FitModel, pars = c("r_sq","r_sq_justX","r_sq_notGeo" ))$c_summary[,,2] #[,"50%"]
+summary(FitModel, pars = c("r_sq","r_sq_notGeo","r_sq_justX"))
+summary(FitModel, pars = c("r_sq_log","r_sq_notGeo_log","r_sq_justX_log"))
 
 
 #Calls p per county 

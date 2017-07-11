@@ -143,20 +143,39 @@ vector<lower=0, upper=1>[n] sim_p;
 vector<lower=0, upper=1>[n] calc_p;
 vector<lower=0, upper=1>[n] calc_p_notGeo;
 vector<lower=0, upper=1>[n] calc_p_justX;
+vector<upper=0>[n] calc_p_log;
+vector<upper=0>[n] calc_p_notGeo_log;
+vector<upper=0>[n] calc_p_justX_log;
 real  obs_lh;
 real  random_lh;
-real  obs_logloss;
-real  random_logloss;
+real  logloss_obs;
+real  logloss_random;
+real  logloss_calc_p;
+real  logloss_notGeo;
+real  logloss_justX;
 real  r_sq;
 real  r_sq_notGeo;
 real  r_sq_justX;
+real  r_sq_log;
+real  r_sq_notGeo_log;
+real  r_sq_justX_log;
 vector<lower=0, upper=1>[nCounties] p;
 vector <upper = 0> [nNotEnd]probSpNotEnd;
 vector <upper = 0> [nEnd]probSpEnd;
 vector <upper = 0> [nSpecies]allProbSpNotEnd;
 vector <upper = 0> [nSpecies]allProbSpEnd;
-vector <upper = 0> [nSpecies]obs_logloss_sp;
-vector <upper = 0> [nSpecies]random_logloss_sp;
+vector <upper = 0> [nSpecies]allProbSpNotEnd_calc_p;
+vector <upper = 0> [nSpecies]allProbSpEnd_calc_p;
+vector <upper = 0> [nSpecies]allProbSpNotEnd_notGeo;
+vector <upper = 0> [nSpecies]allProbSpEnd_notGeo;
+vector <upper = 0> [nSpecies]allProbSpNotEnd_justX;
+vector <upper = 0> [nSpecies]allProbSpEnd_justX;
+vector <upper = 0> [nSpecies]logloss_obs_sp;
+vector <upper = 0> [nSpecies]logloss_random_sp;
+vector <upper = 0> [nSpecies]logloss_calc_p_sp;
+vector <upper = 0> [nSpecies]logloss_notGeo_sp;
+vector <upper = 0> [nSpecies]logloss_justX_sp;
+
 int<lower=1> rndEndSpp[nEnd];   //which species are enangered
 int<lower=1> rndNotEndSpp[nNotEnd];   //which species are NOT enangered
 int<lower=0, upper = nEnd> i_end;
@@ -198,15 +217,15 @@ for (sp in 1:(nSpecies)){
 
 }
 
-obs_logloss_sp[endSpp] = allProbSpEnd[endSpp];
-random_logloss_sp[rndEndSpp]= allProbSpEnd[rndEndSpp];
+logloss_obs_sp[endSpp] = allProbSpEnd[endSpp];
+logloss_random_sp[rndEndSpp]= allProbSpEnd[rndEndSpp];
 
-obs_logloss_sp[notEndSpp] = allProbSpNotEnd[notEndSpp];
-random_logloss_sp[rndNotEndSpp]= allProbSpNotEnd[rndNotEndSpp];
+logloss_obs_sp[notEndSpp] = allProbSpNotEnd[notEndSpp];
+logloss_random_sp[rndNotEndSpp]= allProbSpNotEnd[rndNotEndSpp];
 
 
-obs_logloss = (sum(obs_logloss_sp)/nSpecies)*-1;
-random_logloss = (sum(random_logloss_sp)/nSpecies)*-1;
+logloss_obs = (sum(logloss_obs_sp)/nSpecies)*-1;
+logloss_random = (sum(logloss_random_sp)/nSpecies)*-1;
 
 random_lh = sum(allProbSpNotEnd[rndNotEndSpp])+sum(allProbSpEnd[rndEndSpp]);
 obs_lh =  sum(probSpNotEnd)+sum(probSpEnd);
@@ -214,19 +233,54 @@ obs_lh =  sum(probSpNotEnd)+sum(probSpEnd);
 
 p = exp(logP);
 
-calc_p = inv_logit((x_pred*b)+a+a_cat[HyperPAssign]+geo_effect);
-calc_p_notGeo = inv_logit((x_pred*b)+a+a_cat[HyperPAssign]);
-calc_p_justX = inv_logit((x_pred*b)+a) ;
+calc_p_log = log_inv_logit((x_pred*b)+a+a_cat[HyperPAssign]+geo_effect);
+calc_p_notGeo_log = log_inv_logit((x_pred*b)+a+a_cat[HyperPAssign]);
+calc_p_justX_log = log_inv_logit((x_pred*b)+a) ;
+
+calc_p = exp(calc_p_log);
+calc_p_notGeo = exp(calc_p_notGeo_log);
+calc_p_justX =  exp(calc_p_justX_log);
+
 
 for (cty in 1:n){
   
         sim_p[cty]=inv_logit((x_pred[cty]*b)+normal_rng(0,sigma)+a+a_cat[HyperPAssign[cty]]+geo_effect[cty]);
 
   }
+  
+  
+  
+allProbSpNotEnd_calc_p = spOccMat * log1m_exp(calc_p_log[sampledId]);
+allProbSpEnd_calc_p = log1m_exp(spOccMat * log1m_exp(calc_p_log[sampledId]));
+
+allProbSpNotEnd_notGeo = spOccMat * log1m_exp(calc_p_notGeo_log[sampledId]);
+allProbSpEnd_notGeo = log1m_exp(spOccMat * log1m_exp(calc_p_notGeo_log[sampledId]));
+
+allProbSpNotEnd_justX = spOccMat * log1m_exp(calc_p_justX_log[sampledId]);
+allProbSpEnd_justX = log1m_exp(spOccMat * log1m_exp(calc_p_justX_log[sampledId]));
+
+logloss_calc_p_sp[endSpp] = allProbSpEnd_calc_p[endSpp];
+logloss_calc_p_sp[notEndSpp] = allProbSpNotEnd_calc_p[notEndSpp];
+logloss_notGeo_sp[endSpp] = allProbSpEnd_notGeo[endSpp];
+logloss_notGeo_sp[notEndSpp] = allProbSpNotEnd_notGeo[notEndSpp];
+logloss_justX_sp[endSpp] = allProbSpEnd_justX[endSpp];
+logloss_justX_sp[notEndSpp] = allProbSpNotEnd_justX[notEndSpp];
+
+
+logloss_calc_p = (sum(logloss_calc_p_sp)/nSpecies)*-1;
+logloss_notGeo = (sum(logloss_notGeo_sp)/nSpecies)*-1;
+logloss_justX = (sum(logloss_justX_sp)/nSpecies)*-1;
+
+
 
 r_sq = 1 - variance(p-calc_p[sampledId])/variance(p);
 r_sq_notGeo = 1 - variance(p-calc_p_notGeo[sampledId])/variance(p);
 r_sq_justX = 1 - variance(p-calc_p_justX[sampledId])/variance(p);
+
+r_sq_log = 1 - variance(logP-calc_p_log[sampledId])/variance(logP);
+r_sq_notGeo_log = 1 - variance(logP-calc_p_notGeo_log[sampledId])/variance(logP);
+r_sq_justX_log = 1 - variance(logP-calc_p_justX_log[sampledId])/variance(logP);
+
 
 
 }
