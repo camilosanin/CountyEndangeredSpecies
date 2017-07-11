@@ -265,16 +265,20 @@ refresh = 50                 # show progress every 'refresh' iterations
 
 #Opens model analytics in Shiny
 
-summary(FitModel, pars = c("random_lh", "obs_lh"),  use_cache = F)
-
 resultsShape = AdMatrixData$geoDataObject
   
 library(shinystan)
 #launch_shinystan(FitModel)
 
+
+#Does the model-estimated Ps perform better than random?
+summary(FitModel, pars = c("random_lh", "obs_lh"),  use_cache = F)
+
+stan_plot(FitModel, pars = c("random_lh", "obs_lh"))
+
 #Calls coeff for predictors in matrix X and intersect
 summary(FitModel, pars = c("a",paste("b[",1:dim(X)[2],"]", sep="")))$summary #[,"50%"]
-
+stan_plot(FitModel, pars = c("random_lh", "obs_lh"), show_density=T, ci_level=0.95, outer_level=1)
 
 #Calls coeff for states effects in matrix X
 summary(FitModel, pars = paste("a_cat[",1:nHyperP,"]", sep=""))$summary[,"50%"]
