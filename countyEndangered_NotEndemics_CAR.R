@@ -225,17 +225,39 @@ spOccMat = t(AdMatrixData$geoDataObject@data[AdMatrixData$geoInfo$sampledId$feat
 
 proportionEndSp = nEnd/(nEnd+nNotEnd)
 expectedRandomLogLoss = (proportionEndSp*log(proportionEndSp)+(1-proportionEndSp)*log(1-proportionEndSp))*-1
+####FOR CAR ANALYSES#####
+# #Names of the list elements should be the same (left side of the =)
+# stanData = list( nCounties = length(AdMatrixData$geoInfo$sampledId$featureShape),
+#                  sampledId = AdMatrixData$geoInfo$sampledId$cellStan,
+#                  nNotSampled = length(AdMatrixData$geoInfo$notSampledId$featureShape),
+#                  notSampledId = AdMatrixData$geoInfo$notSampledId$cellStan,
+#                  n = length(AdMatrixData$geoInfo$sampledId$featureShape) + length(AdMatrixData$geoInfo$notSampledId$featureShape) ,
+#                  W_n = dim(AdMatrixData$geoInfo$W_sparse)[1] ,
+#                  W_sparse = AdMatrixData$geoInfo$W_sparse ,
+#                  D_sparse = AdMatrixData$geoInfo$D_sparse ,
+#                  lambda = AdMatrixData$geoInfo$lambda_sparse  ,
+#                  nSpecies = nEnd+nNotEnd,
+#                  nEnd = nEnd,
+#                  nNotEnd = nNotEnd,
+#                  spOccMat = spOccMat,#Species by county Matrix (1 and 0)
+#                  endSpp = whichEnd , #Which species are endangered (numbers matching spOccMat)
+#                  notEndSpp = whichNotEnd, #Which species are NOT endangered (numbers matching spOccMat)
+#                  nHyperP = nHyperP, #Number of categories (States)
+#                  HyperPAssign = HyperPAssign, #Vector of length counties assigning it to a state (numeric)
+#                  K = dim(X)[2],
+#                  x_pred = X,
+#                  proportionEndSp = proportionEndSp
+#                  
+# )
 
+#######ANALYSES WITHOUT CAR ##########
 #Names of the list elements should be the same (left side of the =)
+
 stanData = list( nCounties = length(AdMatrixData$geoInfo$sampledId$featureShape),
                  sampledId = AdMatrixData$geoInfo$sampledId$cellStan,
                  nNotSampled = length(AdMatrixData$geoInfo$notSampledId$featureShape),
                  notSampledId = AdMatrixData$geoInfo$notSampledId$cellStan,
                  n = length(AdMatrixData$geoInfo$sampledId$featureShape) + length(AdMatrixData$geoInfo$notSampledId$featureShape) ,
-                 W_n = dim(AdMatrixData$geoInfo$W_sparse)[1] ,
-                 W_sparse = AdMatrixData$geoInfo$W_sparse ,
-                 D_sparse = AdMatrixData$geoInfo$D_sparse ,
-                 lambda = AdMatrixData$geoInfo$lambda_sparse  ,
                  nSpecies = nEnd+nNotEnd,
                  nEnd = nEnd,
                  nNotEnd = nNotEnd,
@@ -250,16 +272,17 @@ stanData = list( nCounties = length(AdMatrixData$geoInfo$sampledId$featureShape)
                  
 )
 
-
 #This line loads the compiled C++ Stan Model, if all files are in the same working directory, you shouldnt need to compile again, unless you change the .stan file
-StanModel = stan_model(file = "countyEndangered_NotEndemics_CAR.stan" )
+#StanModel = stan_model(file = "countyEndangered_NotEndemics_CAR.stan" )
+
+StanModel = stan_model(file = "countyEndangered_NotEndemics_notCAR.stan" )
 
 #Runs the MCMC model                       
 FitModel = sampling(StanModel,
 data = stanData,              # named list of data
 chains = 1,                   # number of Markov chains
-warmup = 300,               # number of warmup iterations per chain
-iter = 500,                 # total number of iterations per chain (includes warm-up)
+warmup = 30,               # number of warmup iterations per chain
+iter = 50,                 # total number of iterations per chain (includes warm-up)
 cores = 2,                    # number of cores
 refresh = 1                 # show progress every 'refresh' iterations
 )
@@ -279,8 +302,12 @@ summary(FitModel, pars = c("random_lh", "obs_lh"),  use_cache = F)
 stan_plot(FitModel, pars = c("random_lh", "obs_lh"), show_density=T, ci_level=0.95, outer_level=1)
 
 #Does the model-estimated Ps perform better than random?
-summary(FitModel, pars = c("logloss_random", "logloss_obs", "logloss_calc_p", "logloss_notGeo", "logloss_justX" ),  use_cache = F)
-stan_plot(FitModel, pars = c("logloss_random", "logloss_obs", "logloss_calc_p", "logloss_notGeo", "logloss_justX" ), show_density=T, ci_level=0.95, outer_level=1)+ geom_vline(xintercept=expectedRandomLogLoss, linetype="dashed", color = "red")
+# summary(FitModel, pars = c("logloss_random", "logloss_obs", "logloss_calc_p", "logloss_notGeo", "logloss_justX" ),  use_cache = F)
+# stan_plot(FitModel, pars = c("logloss_random", "logloss_obs", "logloss_calc_p", "logloss_notGeo", "logloss_justX" ), show_density=T, ci_level=0.95, outer_level=1)+ geom_vline(xintercept=expectedRandomLogLoss, linetype="dashed", color = "red")
+
+summary(FitModel, pars = c("logloss_random", "logloss_obs",  "logloss_notGeo", "logloss_justX" ),  use_cache = F)
+stan_plot(FitModel, pars = c("logloss_random", "logloss_obs", "logloss_notGeo", "logloss_justX" ), show_density=T, ci_level=0.95, outer_level=1)+ geom_vline(xintercept=expectedRandomLogLoss, linetype="dashed", color = "red")
+
 
 #Calls coeff for predictors in matrix X and intersect
 summary(FitModel, pars = c("a",paste("b[",1:dim(X)[2],"]", sep="")))$summary #[,"50%"]
@@ -299,8 +326,11 @@ abline(h=0,lty="dashed", lwd= 2, col="darkred")
 
 
 #Calls r squareds 
-summary(FitModel, pars = c("r_sq","r_sq_notGeo","r_sq_justX"))
-summary(FitModel, pars = c("r_sq_log","r_sq_notGeo_log","r_sq_justX_log"))
+# summary(FitModel, pars = c("r_sq","r_sq_notGeo","r_sq_justX"))
+# summary(FitModel, pars = c("r_sq_log","r_sq_notGeo_log","r_sq_justX_log"))
+
+summary(FitModel, pars = c("r_sq_notGeo","r_sq_justX"))
+summary(FitModel, pars = c("r_sq_notGeo_log","r_sq_justX_log"))
 
 
 #Calls p per county 
