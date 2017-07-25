@@ -191,7 +191,7 @@ countyShapeFile@data[,"Y"] = rnorm(nCounties, 10,100)
 ####END OF SIMULATED DATASET#####
 
 
-AdMatrixData = shapeLopodData(countyShapeFile, fieldN = "Richness", fieldY = "Richness", keepFields = TRUE, Adjacency = TRUE)
+AdMatrixData = shapeLopodData(countyShapeFile, fieldN = "Richness", fieldY = "Richness", keepFields = TRUE, Adjacency = FALSE)
 
 
 #Load Stan
@@ -255,9 +255,12 @@ expectedRandomLogLoss = (proportionEndSp*log(proportionEndSp)+(1-proportionEndSp
 
 stanData = list( nCounties = length(AdMatrixData$geoInfo$sampledId$featureShape),
                  sampledId = AdMatrixData$geoInfo$sampledId$cellStan,
-                 nNotSampled = length(AdMatrixData$geoInfo$notSampledId$featureShape),
-                 notSampledId = AdMatrixData$geoInfo$notSampledId$cellStan,
-                 n = length(AdMatrixData$geoInfo$sampledId$featureShape) + length(AdMatrixData$geoInfo$notSampledId$featureShape) ,
+                 # nNotSampled = length(AdMatrixData$geoInfo$notSampledId$featureShape),
+                 # notSampledId = AdMatrixData$geoInfo$notSampledId$cellStan,
+                 nNotSampled = 0,
+                 notSampledId = vector(),
+                 #n = length(AdMatrixData$geoInfo$sampledId$featureShape) + length(AdMatrixData$geoInfo$notSampledId$featureShape) ,
+                 n = length(AdMatrixData$geoInfo$sampledId$featureShape),
                  nSpecies = nEnd+nNotEnd,
                  nEnd = nEnd,
                  nNotEnd = nNotEnd,

@@ -39,7 +39,6 @@ parameters{
   vector[K]  b;
   real <lower = 0> sigma;
   vector [nCounties] error;
-  vector [n] geo_effect;
   vector  [nHyperP] a_cat;
   real <lower = 0> a_sigma;
 
@@ -57,7 +56,7 @@ transformed parameters {
 
 
 
-  odds_raw = (x_pred[sampledId,]*b)+error+a+a_cat[HyperPAssign[sampledId]]+geo_effect[sampledId];
+  odds_raw = (x_pred[sampledId,]*b)+error+a+a_cat[HyperPAssign[sampledId]];
   logP =  log_inv_logit(odds_raw);
   log1mP = log1m_exp(logP);
   
