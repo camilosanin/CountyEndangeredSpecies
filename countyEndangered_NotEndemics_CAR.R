@@ -312,6 +312,9 @@ summary(FitModel, pars = c("logloss_random", "logloss_obs",  "logloss_notGeo", "
 stan_plot(FitModel, pars = c("logloss_random", "logloss_obs", "logloss_notGeo", "logloss_justX" ), show_density=T, ci_level=0.95, outer_level=1)+ geom_vline(xintercept=expectedRandomLogLoss, linetype="dashed", color = "red")
 
 
+stan_plot(FitModel, pars = paste("a_cat[",1:nHyperP,"]", sep=""), show_density=T, ci_level=0.95, outer_level=1)+ geom_vline(xintercept=0, linetype="dashed", color = "red")
+
+
 #Calls coeff for predictors in matrix X and intersect
 summary(FitModel, pars = c("a",paste("b[",1:dim(X)[2],"]", sep="")))$summary #[,"50%"]
 
