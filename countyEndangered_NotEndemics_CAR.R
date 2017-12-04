@@ -86,7 +86,7 @@ for(st in unique(countyShapeFile@data$STATEFP) ){
 
 #All effects combined in P
 
-countyShapeFile@data[,"P"] = countyShapeFile@data[,"P_X"]*0.55+countyShapeFile@data[,"P_Geo"]*0.20+countyShapeFile@data[,"P_State"]*0.15+countyShapeFile@data[,"P_Res"]*0.1
+countyShapeFile@data[,"P"] = countyShapeFile@data[,"P_X"]*0.25+countyShapeFile@data[,"P_Geo"]*0.50+countyShapeFile@data[,"P_State"]*0.15+countyShapeFile@data[,"P_Res"]*0.1
 
 #spplot(countyShapeFile,  col = "transparent", zcol = c("P_Geo", "P_X", "P_State", "P"))
 spplot(countyShapeFile,  col = "transparent", zcol = c("P"))
@@ -284,8 +284,8 @@ StanModel = stan_model(file = "countyEndangered_NotEndemics_notCAR.stan" )
 FitModel = sampling(StanModel,
 data = stanData,              # named list of data
 chains = 1,                   # number of Markov chains
-warmup = 30,               # number of warmup iterations per chain
-iter = 50,                 # total number of iterations per chain (includes warm-up)
+warmup = 2500,               # number of warmup iterations per chain
+iter = 3000,                 # total number of iterations per chain (includes warm-up)
 cores = 2,                    # number of cores
 refresh = 1                 # show progress every 'refresh' iterations
 )
@@ -311,8 +311,9 @@ stan_plot(FitModel, pars = c("random_lh", "obs_lh"), show_density=T, ci_level=0.
 summary(FitModel, pars = c("logloss_random", "logloss_obs",  "logloss_notGeo", "logloss_justX" ),  use_cache = F)
 stan_plot(FitModel, pars = c("logloss_random", "logloss_obs", "logloss_notGeo", "logloss_justX" ), show_density=T, ci_level=0.95, outer_level=1)+ geom_vline(xintercept=expectedRandomLogLoss, linetype="dashed", color = "red")
 
+summary(FitModel, pars = paste("a_cat[",1:nHyperP,"]", sep=""))
 
-stan_plot(FitModel, pars = paste("a_cat[",1:nHyperP,"]", sep=""), show_density=T, ci_level=0.95, outer_level=1)+ geom_vline(xintercept=0, linetype="dashed", color = "red")
+stan_plot(FitModel, pars = paste("a_cat[",1:nHyperP,"]", sep=""), show_density=F, ci_level=0.95, outer_level=1)+ geom_vline(xintercept=0, linetype="dashed", color = "red")
 
 
 #Calls coeff for predictors in matrix X and intersect
