@@ -336,9 +336,10 @@ abline(h=0,lty="dashed", lwd= 2, col="darkred")
 # summary(FitModel, pars = c("r_sq","r_sq_notGeo","r_sq_justX"))
 # summary(FitModel, pars = c("r_sq_log","r_sq_notGeo_log","r_sq_justX_log"))
 
-summary(FitModel, pars = c("r_sq_notGeo","r_sq_justX"))
+summary(FitModel, pars = c("logloss_obs_stand","logloss_random_stand", "logloss_notGeo_stand","logloss_justX_stand"))
 summary(FitModel, pars = c("r_sq_notGeo_log","r_sq_justX_log"))
 
+stan_plot(FitModel, pars = c("logloss_obs_stand", "logloss_notGeo_stand","logloss_justX_stand" ,"logloss_random_stand"), show_density = T)
 
 #Calls p per county 
 
