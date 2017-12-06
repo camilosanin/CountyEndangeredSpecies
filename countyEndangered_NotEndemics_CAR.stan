@@ -75,8 +75,8 @@ transformed data{
   endSpOccMat = spOccMat[endSpp,] ; 
   notEndSpOccMat = spOccMat[notEndSpp,] ;
   
-  logloss_naive =  -1 * ((proportionEndSp * log(proportionEndSp)) + ((1 - proportionEndSp) * log(1 - proportionEndSp)));
-
+  // logloss_naive =  -1 * ((proportionEndSp * log(proportionEndSp)) + ((1 - proportionEndSp) * log(1 - proportionEndSp)));
+  logloss_naive =  -1 * (proportionEndSp * log(proportionEndSp) + (1 - proportionEndSp) * log(1 - proportionEndSp));
 
 }
 
